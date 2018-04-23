@@ -1,2 +1,3 @@
-# nomadcoin
+# Nomadcoin
+
 blockchain test with nodejs

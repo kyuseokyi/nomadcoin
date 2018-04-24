@@ -17,10 +17,10 @@ class Block {
 // 4B97A3F47AC5A636EA4077117A03BF4A4EF89D56BA9B70D1CA3BEBE89A31694E
 const genesisBlock = new Block(
     0,
-    '4B97A3F47AC5A636EA4077117A03BF4A4EF89D56BA9B70D1CA3BEBE89A31694E',
+    "4B97A3F47AC5A636EA4077117A03BF4A4EF89D56BA9B70D1CA3BEBE89A31694E",
     null,
     1524476950966,
-    'This block is genesis block'
+    "This block is genesis block"
 );
 
 //genesisblock을 이용하영 blockchain을 만든다. Block Type의 배열이다.
@@ -38,8 +38,8 @@ const getLastBlock = () => blockChain[blockChain.length - 1];
 const getNewTimestamp = () => new Date().getTime() / 1000;
 
 //data를 받아 sha256 해쉬를 만들어준다.
-const createHash = (index, hash, previousHash, data) =>
-    CryptoJS.SHA256(index + hash + previousHash + data).toString();
+const createHash = (index, previoushash, timestamp, data) =>
+    CryptoJS.SHA256(index + previoushash + timestamp + data).toString();
 
 const createNewBlock = data => {
   const previousBlock = getLastBlock();
@@ -61,5 +61,32 @@ const createNewBlock = data => {
 
   return newBlock;
 };
+
+const candidateBlock = null;
+const lastestBlock = null;
+
+//블럭 해시를 생성해서 가져온다.
+const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data);
+
+// 새로 생성된 블럭 검증.
+// @param candidateBlock 후보불럭 새로 생선예정 블럭
+// @param lastestBlock 마지막으로 생성된 블럭.
+const isNewBlockValid = (candidateBlock, lastestBlock) => {
+  //check index
+  if (lastestBlock.index + 1 != candidateBlock.index) {
+    console.log('The candidateBlock doesnt have valid index');
+    return false;
+  } else if (lastestBlock.hash !== candidateBlock.previousHash) {
+    //
+    console.log('The previousBlock of candidate block is not the hash of the latest block');
+    return false;
+  } else if (getBlockHash(candidateBlock) !== getBlockHash(candidateBlock.hash)) {
+    // 후보블럭 해쉬 검증.
+    console.log('The hash of this block is invalid');
+    return false;
+  }
+  return true;
+}
+
 
 console.log(blockChain);

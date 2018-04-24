@@ -39,7 +39,7 @@ const getNewTimestamp = () => new Date().getTime() / 1000;
 
 //data를 받아 sha256 해쉬를 만들어준다.
 const createHash = (index, previoushash, timestamp, data) =>
-    CryptoJS.SHA256(index + previoushash + timestamp + data).toString();
+    CryptoJS.SHA256(index + previoushash + timestamp + JSON.stringify(data)).toString();
 
 const createNewBlock = data => {
   const previousBlock = getLastBlock();
@@ -86,6 +86,18 @@ const isNewBlockValid = (candidateBlock, lastestBlock) => {
     return false;
   }
   return true;
+}
+
+// 새로운 블럭의 구조를 검증한다.
+const isNewBlockStructureValid = (block) => {
+    //블럭내 type을 검증한다.
+    return (
+        typeof block.index === 'number' &&
+        typeof block.hash === 'string' &&
+        typeof block.previousHash === 'string' &&
+        typeof block.timestamp === 'number' &&
+        typeof block.data === 'string'
+    )
 }
 
 

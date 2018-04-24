@@ -62,9 +62,6 @@ const createNewBlock = data => {
   return newBlock;
 };
 
-const candidateBlock = null;
-const lastestBlock = null;
-
 //블럭 해시를 생성해서 가져온다.
 const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data);
 
@@ -72,8 +69,12 @@ const getBlockHash = (block) => createHash(block.index, block.previousHash, bloc
 // @param candidateBlock 후보불럭 새로 생선예정 블럭
 // @param lastestBlock 마지막으로 생성된 블럭.
 const isNewBlockValid = (candidateBlock, lastestBlock) => {
-  //check index
-  if (lastestBlock.index + 1 != candidateBlock.index) {
+  if (!isNewBlockStructureValid(candidateBlock)) {
+    //새로 추가될 블럭의 구조를 검증한다.
+    console.log('The candidate block structure is not valid');
+    return false;
+  } else if (lastestBlock.index + 1 != candidateBlock.index) {
+    //check index
     console.log('The candidateBlock doesnt have valid index');
     return false;
   } else if (lastestBlock.hash !== candidateBlock.previousHash) {
@@ -98,6 +99,31 @@ const isNewBlockStructureValid = (block) => {
         typeof block.timestamp === 'number' &&
         typeof block.data === 'string'
     )
+}
+
+//블럭체인을 검증한다.
+//중요 - 모든 블럭은 하나의 genesis 시작된 불럭이어야한다.
+//블럭체인 배열의 첫번재 불럭은 genesis 블럭이어야 한다. 불변. 무조건. 핵심이다. 가장 중요.
+const isChaindValid = (candidateBlock) => {
+  //블럭체인(배열)
+  const isGenesisValid = (block) => {
+    return JSON.stringify(block) === JSON.stringify(genesisBlock)
+  }
+  //후보 체인이 genesisBlock으로 부터 만들어 졌는지를 확인한다.
+  if (!isGenesisValid(candidateBlock[0])) {
+    console.log("The candidateChain's genesis block is not same as our genesis block");
+    return false;
+  }
+
+  //블럭체인을 검증할때에는 이전 해쉬값을 검증해야한다. 하지만 genesisBlock은 첫번째 블럭으로 이전 블럭해쉬를 가지고 있지 않음으로 검증에서 제외한다.
+  //체크는 2번째 블럭부터 첫번째는 제네시스 블럭이기 때문이다.
+  for (let i = 1; i < candidateBlock.length; i++) {
+    if (!isNewBlockValid(candidateBlock[i], candidateBlock[i - 1])) {
+      console.log('');
+      return false;
+    }
+    return true;
+  }
 }
 
 

@@ -62,6 +62,7 @@ const createNewBlock = data => {
       data
   );
 
+  addBlockToChain(newBlock);
   return newBlock;
 };
 
@@ -152,5 +153,7 @@ const addBlockToChain = candidateBlock => {
   }
 }
 
-
-console.log(blockChain);
+module.exports = {
+  getBlockChain,
+  createNewBlock
+}

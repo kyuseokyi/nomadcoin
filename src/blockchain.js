@@ -37,6 +37,9 @@ const getLastBlock = () => blockChain[blockChain.length - 1];
 //생성시간을 가져옴.
 const getNewTimestamp = () => new Date().getTime() / 1000;
 
+//블럭체인은 가져옴.
+const getBlockChain = () => blockChain;
+
 //data를 받아 sha256 해쉬를 만들어준다.
 const createHash = (index, previoushash, timestamp, data) =>
     CryptoJS.SHA256(index + previoushash + timestamp + JSON.stringify(data)).toString();
@@ -123,6 +126,29 @@ const isChaindValid = (candidateBlock) => {
       return false;
     }
     return true;
+  }
+}
+
+//블럭및 체인의 검증이 완료되면 새로운 블럭체인으로 교체한다.
+//블럭검증 -> genesis 블럭 검증, 유효성 검증 -> 체인 길이확인. -> 교체
+const replaceChain = newChain =>{
+  if(isChaindValid(newChain) && newChain.length > getBlockChain().length) {
+    blockChain = newChain;
+    return true;
+  } else {
+    //체인 길이가 짧거나 같다면 블럭 채굴 실패.
+    return false;
+  }
+}
+
+//블럭 검증 완료되면 기존블럭체인에 새로운 블럭을 추가한다.
+//genesis블럭및 구조검증은 완료된 상태이다.
+const addBlockToChain = candidateBlock => {
+  if(isNewBlockValid(candidateBlock, getLastBlock())) {
+    getBlockChain().push(candidateBlock);
+    return true;
+  } else {
+    return false;
   }
 }
 

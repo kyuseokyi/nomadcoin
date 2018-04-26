@@ -38,7 +38,7 @@ const getLastBlock = () => blockChain[blockChain.length - 1];
 const getNewTimestamp = () => new Date().getTime() / 1000;
 
 //블럭체인은 가져옴.
-const getBlockChain = () => blockChain;
+const getBlockchain = () => blockChain;
 
 //data를 받아 sha256 해쉬를 만들어준다.
 const createHash = (index, previoushash, timestamp, data) =>
@@ -133,7 +133,7 @@ const isChaindValid = (candidateBlock) => {
 //블럭및 체인의 검증이 완료되면 새로운 블럭체인으로 교체한다.
 //블럭검증 -> genesis 블럭 검증, 유효성 검증 -> 체인 길이확인. -> 교체
 const replaceChain = newChain =>{
-  if(isChaindValid(newChain) && newChain.length > getBlockChain().length) {
+  if(isChaindValid(newChain) && newChain.length > getBlockchain().length) {
     blockChain = newChain;
     return true;
   } else {
@@ -146,7 +146,7 @@ const replaceChain = newChain =>{
 //genesis블럭및 구조검증은 완료된 상태이다.
 const addBlockToChain = candidateBlock => {
   if(isNewBlockValid(candidateBlock, getLastBlock())) {
-    getBlockChain().push(candidateBlock);
+    getBlockchain().push(candidateBlock);
     return true;
   } else {
     return false;
@@ -154,6 +154,6 @@ const addBlockToChain = candidateBlock => {
 }
 
 module.exports = {
-  getBlockChain,
+  getBlockchain,
   createNewBlock
 }

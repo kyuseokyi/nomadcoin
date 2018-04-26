@@ -85,7 +85,7 @@ const isNewBlockValid = (candidateBlock, lastestBlock) => {
     //
     console.log('The previousBlock of candidate block is not the hash of the latest block');
     return false;
-  } else if (getBlockHash(candidateBlock) !== getBlockHash(candidateBlock.hash)) {
+  } else if (getBlockHash(candidateBlock) !== candidateBlock.hash) {
     // 후보블럭 해쉬 검증.
     console.log('The hash of this block is invalid');
     return false;
@@ -146,9 +146,11 @@ const replaceChain = newChain =>{
 //genesis블럭및 구조검증은 완료된 상태이다.
 const addBlockToChain = candidateBlock => {
   if(isNewBlockValid(candidateBlock, getLastBlock())) {
+    console.log('block add true');
     getBlockchain().push(candidateBlock);
     return true;
   } else {
+    console.log('block add fail');
     return false;
   }
 }

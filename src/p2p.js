@@ -123,7 +123,10 @@ const handleBlockchainResponse = receivedBlocks => {
     if (newestBlock.hash === latestBlockReceived.previousHash) {
       //새로 받은 블럭의 이전불럭과 현재 가지고 있는 최신 불럭이 같다면 새로받은 불럭은 내 블럭체인에 추가해야한다.
       //클라이언트가 가진 블럭의과의 차이가 한개 뿐이라면 추가해준다.
-      addBlockToChain(latestBlockReceived);
+      if (addBlockToChain(latestBlockReceived)) {
+        //블럭이 성공적으로 추가되었다면 모든 노드에게 추가된 불럭을 전달한다.
+        broadcastNewBlock();
+      };
     } else if (receivedBlocks.length === 1) {
       //To do , get all blocks,
       //클라이언트가 가진 블러과의 차이 많다면 (배열의 길이의 차이가 심하다면 전체를 교채한다. )
@@ -147,6 +150,9 @@ const responseLatest = () => blockchainResponse([getNewestBlock()]);
 
 //모든 블럭을 보내준다.
 const responseAll = () => blockchainResponse(getBlockschain);
+
+//모든 노드에게 새로운 블럭이 생성되었음을 알린다.
+const broadcastNewBlock = () => sendMessageToAll(responseLatest());
 
 
 //소켓 에러 핸들러 정의
@@ -173,5 +179,6 @@ const connectToPeers = newPeer => {
 
 module.exports = {
   startP2PServer,
-  connectToPeers
+  connectToPeers,
+  broadcastNewBlock
 }

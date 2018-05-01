@@ -27,7 +27,7 @@ const genesisBlock = new Block(
 //블럭체인의 시작이다.
 let blockChain = [genesisBlock];
 
-const getLastBlock = () => blockChain[blockChain.length - 1];
+const getNewestBlock = () => blockChain[blockChain.length - 1];
 
 // // getLastBlock 다른 표현
 // function getLastBlock() {
@@ -45,7 +45,7 @@ const createHash = (index, previoushash, timestamp, data) =>
     CryptoJS.SHA256(index + previoushash + timestamp + JSON.stringify(data)).toString();
 
 const createNewBlock = data => {
-  const previousBlock = getLastBlock();
+  const previousBlock = getNewestBlock();
   const newBlockIndex = previousBlock.index +1;
   const newTimestamp = getNewTimestamp();
   const newHash = createHash(
@@ -72,8 +72,8 @@ const getBlockHash = (block) => createHash(block.index, block.previousHash, bloc
 // 새로 생성된 블럭 검증.
 // @param candidateBlock 후보불럭 새로 생선예정 블럭
 // @param lastestBlock 마지막으로 생성된 블럭.
-const isNewBlockValid = (candidateBlock, lastestBlock) => {
-  if (!isNewBlockStructureValid(candidateBlock)) {
+const isBlockValid = (candidateBlock, lastestBlock) => {
+  if (!isBlockStructureValid(candidateBlock)) {
     //새로 추가될 블럭의 구조를 검증한다.
     console.log('The candidate block structure is not valid');
     return false;
@@ -94,7 +94,7 @@ const isNewBlockValid = (candidateBlock, lastestBlock) => {
 }
 
 // 새로운 블럭의 구조를 검증한다.
-const isNewBlockStructureValid = (block) => {
+const isBlockStructureValid = (block) => {
     //블럭내 type을 검증한다.
     return (
         typeof block.index === 'number' &&
@@ -122,7 +122,7 @@ const isChaindValid = (candidateBlock) => {
   //블럭체인을 검증할때에는 이전 해쉬값을 검증해야한다. 하지만 genesisBlock은 첫번째 블럭으로 이전 블럭해쉬를 가지고 있지 않음으로 검증에서 제외한다.
   //체크는 2번째 블럭부터 첫번째는 제네시스 블럭이기 때문이다.
   for (let i = 1; i < candidateBlock.length; i++) {
-    if (!isNewBlockValid(candidateBlock[i], candidateBlock[i - 1])) {
+    if (!isBlockValid(candidateBlock[i], candidateBlock[i - 1])) {
       console.log('');
       return false;
     }
@@ -145,7 +145,7 @@ const replaceChain = newChain =>{
 //블럭 검증 완료되면 기존블럭체인에 새로운 블럭을 추가한다.
 //genesis블럭및 구조검증은 완료된 상태이다.
 const addBlockToChain = candidateBlock => {
-  if(isNewBlockValid(candidateBlock, getLastBlock())) {
+  if(isBlockValid(candidateBlock, getNewestBlock())) {
     console.log('block add true');
     getBlockchain().push(candidateBlock);
     return true;
@@ -158,5 +158,9 @@ const addBlockToChain = candidateBlock => {
 module.exports = {
   getBlockchain,
   createNewBlock,
-  getLastBlock
+  getNewestBlock,
+  isBlockValid,
+  isBlockStructureValid,
+  addBlockToChain,
+  replaceChain
 }

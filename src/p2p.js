@@ -1,6 +1,8 @@
 const Websockets = require("ws");
 const Blockchain = require("./blockchain");
 
+const { getNewestBlock, addBlockToChain, isBlockStructureValid, replaceChain, getBlockchain  } = Blockchain;
+
 //연결된 소켓 목록.
 const sockets = [];
 
@@ -35,8 +37,6 @@ const blockchainResponse = (data) => {
 
 //소켓 목록을 가져온다.
 const getSockets = () => sockets;
-//블럭체인을 가져온다.
-const { getBlockschain, getLastBlock } = Blockchain;
 
 
 const startP2PServer = server => {
@@ -57,7 +57,7 @@ const initSocketConnection = ws => {
   handleSocketError(ws);
   //접속한 대상에게 체인의 마지막 블럭을 전달한다.
   //이블럭을 통행 접속한 대상의 불럭체인 상태를 점검한다. 동일한 체인인지. 서로 다른 체인의 사이즈를 가지고 있는지확인다.
-  sendMessage(ws, getLastBlock());
+  sendMessage(ws, responseLatest());
   console.log('finish initsocketconnection');
 }
 
@@ -81,21 +81,73 @@ const handleSocketMessages = ws => {
     } 
     console.log(data);
     switch (message.type) {
-      case GET_LATEST:
+      case GET_LATEST: //마지막 블럭을 요청한다.
         console.log("message Type : ")
-        sendMessage(ws, getLastBlock());
+        sendMessage(ws, responseLatest());
         break;
-      case GET_ALL:
-        sendMessage(ws, getAll());
+      case GET_ALL: //불럭체인을 요청한다.
+        sendMessage(ws, responseAll());
         break;
-      case BLOCKCHAIN_RESPONSE:
-
+      case BLOCKCHAIN_RESPONSE: //블럭체인을 받았을경우.
+        const receivedBlocks = message.data;
+        if (receivedBlocks === null) {
+          break;
+        }
+        handleBlockchainResponse(receivedBlocks);
         break;
     }
   });
 };
 
+//respnose data가 블럭일경의 핸들러.
+//@param receviedBlocks 블럭배열
+const handleBlockchainResponse = receivedBlocks => {
+  if (receivedBlocks.length === 0) {
+    console.log("Received blocks hava a length of 0");
+    return;
+  }
+
+  //전달받은 블럭을 검증한다.
+  const latestBlockReceived = receivedBlocks[receivedBlocks.length-1];
+  //구조상 이상이 없으면 계속 진행.
+  if (!isBlockStructureValid(latestBlockReceived)) {
+    console.log("The blocks structure of the block received is not valid");
+    return;
+  }
+
+  const newestBlock = getNewestBlock();
+
+  if (latestBlockReceived.index > newestBlock.index) {
+    //다른 서버의 블럭이 내가 가지고 있는 마지막 블러보다 앞서있다는 의미
+    //두 블럭사이에 길이의 차이를 구한다.
+    if (newestBlock.hash === latestBlockReceived.previousHash) {
+      //새로 받은 블럭의 이전불럭과 현재 가지고 있는 최신 불럭이 같다면 새로받은 불럭은 내 블럭체인에 추가해야한다.
+      //클라이언트가 가진 블럭의과의 차이가 한개 뿐이라면 추가해준다.
+      addBlockToChain(latestBlockReceived);
+    } else if (receivedBlocks.length === 1) {
+      //To do , get all blocks,
+      //클라이언트가 가진 블러과의 차이 많다면 (배열의 길이의 차이가 심하다면 전체를 교채한다. )
+      //모든 peer에게 블럭체인을 요청한다.
+      sendMessageToAll(getAll());
+    } else {
+      replaceChain(receivedBlocks);
+    }
+    console.log("")
+  }
+}
+
+//들어온 요청에 메세지를 보낸다.
 const sendMessage = (ws, message) => ws.send(JSON.stringify(message));
+
+//모든 peer에 메세지를 보낸다.
+const sendMessageToAll = message => sockets.forEach(ws => sendMessage(ws, message))
+
+//마지막 블럭을 보내준다.
+const responseLatest = () => blockchainResponse([getNewestBlock()]);
+
+//모든 블럭을 보내준다.
+const responseAll = () => blockchainResponse(getBlockschain);
+
 
 //소켓 에러 핸들러 정의
 const handleSocketError = ws => {

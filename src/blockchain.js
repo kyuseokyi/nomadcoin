@@ -1,13 +1,16 @@
 const CryptoJS = require('crypto-js');
+const hexToBinary = require('hex-to-binary');
 
 class Block {
   //포인트는  이전 해쉬 코드를가지고 새로운 해쉬를 만드는 것이 블럭체인 의 핵심이다.
-  constructor(index, hash, previousHash, timestamp, data) {
+  constructor(index, hash, previousHash, timestamp, data, difficulty, nonce) {
     this.index = index;
     this.hash = hash;
     this.previousHash = previousHash;
     this.timestamp = timestamp;
     this.data = data;
+    this.difficulty = difficulty;
+    this.nonce = nonce;
   }
 }
 
@@ -20,7 +23,9 @@ const genesisBlock = new Block(
     "4B97A3F47AC5A636EA4077117A03BF4A4EF89D56BA9B70D1CA3BEBE89A31694E",
     null,
     1524476950966,
-    "This block is genesis block"
+    "This block is genesis block",
+    0,
+    0
 );
 
 //genesisblock을 이용하영 blockchain을 만든다. Block Type의 배열이다.
@@ -41,31 +46,54 @@ const getNewTimestamp = () => new Date().getTime() / 1000;
 const getBlockchain = () => blockChain;
 
 //data를 받아 sha256 해쉬를 만들어준다.
-const createHash = (index, previoushash, timestamp, data) =>
-    CryptoJS.SHA256(index + previoushash + timestamp + JSON.stringify(data)).toString();
+const createHash = (index, previoushash, timestamp, data, difficulty, nonce) =>
+    CryptoJS.SHA256(index + previoushash + timestamp + JSON.stringify(data) + difficulty + nonce).toString();
 
 const createNewBlock = data => {
   const previousBlock = getNewestBlock();
   const newBlockIndex = previousBlock.index +1;
   const newTimestamp = getNewTimestamp();
-  const newHash = createHash(
+  const newBlock = findBlock (
       newBlockIndex,
       previousBlock.hash,
       newTimestamp,
-      data
-  );
-  const newBlock = new Block(
-      newBlockIndex,
-      newHash,
-      previousBlock.hash,
-      newTimestamp,
-      data
+      data,
+      5
   );
 
   addBlockToChain(newBlock);
   require('./p2p').broadcastNewBlock();
   return newBlock;
 };
+
+//블
+const findBlock  = (index, previousHash, timestamp, data, difficulty) => {
+  let nonce = 0;
+  while (true) {
+    console.log('current nonce: ', nonce);
+    const hash = createHash(
+      index,
+      previousHash,
+      timestamp,
+      data,
+      difficulty,
+      nonce
+    );
+    //todo check amount of zeros(hashmatchesdifficulty)
+    if (hashMatchesDifficulty(hash, difficulty)) {
+      return new Block(index, hash, previousHash, timestamp, data, difficulty, nonce);
+    }
+    nonce++;
+  }
+}
+
+//hash의 난이도를 찾아낸다.
+const hashMatchesDifficulty = (hash, difficulty) => {
+  const hexInBinary = hexToBinary(hash);
+  const requiredZeros = "0".repeat(difficulty);
+  console.log('Trying difficulty :', difficulty, 'with hash', hash);
+  return hexInBinary.startsWith(requiredZeros);
+}
 
 //블럭 해시를 생성해서 가져온다.
 const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data);

@@ -1,6 +1,14 @@
 const CryptoJS = require('crypto-js');
 const hexToBinary = require('hex-to-binary');
 
+
+//몇분마다 블럭이 체굴될것인지.
+const BLOCK_GENERATION_INTERVAL = 10;
+
+//난이드 증가 블럭 범위.10번째블럭마다 난이드를 중가시킨다. 비트코인의 경우 2016번째 마다 난이도가 증가한다.
+const DIFFICULTY_ADJUSMENT_INTERVAL = 10;
+
+
 class Block {
   //포인트는  이전 해쉬 코드를가지고 새로운 해쉬를 만드는 것이 블럭체인 의 핵심이다.
   constructor(index, hash, previousHash, timestamp, data, difficulty, nonce) {
@@ -22,7 +30,7 @@ const genesisBlock = new Block(
     0,
     "4B97A3F47AC5A636EA4077117A03BF4A4EF89D56BA9B70D1CA3BEBE89A31694E",
     null,
-    1524476950966,
+    1525287195,
     "This block is genesis block",
     0,
     0
@@ -40,7 +48,9 @@ const getNewestBlock = () => blockChain[blockChain.length - 1];
 // }
 
 //생성시간을 가져옴.
-const getNewTimestamp = () => new Date().getTime() / 1000;
+//1단계. 보안을 위하여 round 처리.
+//2단계. 유효성을 검증해야함.
+const getNewTimestamp = () => Math.round(new Date().getTime() / 1000);
 
 //블럭체인은 가져옴.
 const getBlockchain = () => blockChain;
@@ -53,18 +63,47 @@ const createNewBlock = data => {
   const previousBlock = getNewestBlock();
   const newBlockIndex = previousBlock.index +1;
   const newTimestamp = getNewTimestamp();
+  const difficulty = findDifficulty();
   const newBlock = findBlock (
       newBlockIndex,
       previousBlock.hash,
       newTimestamp,
       data,
-      5
+      difficulty
   );
 
   addBlockToChain(newBlock);
   require('./p2p').broadcastNewBlock();
   return newBlock;
 };
+
+//난이도를 가저온다.
+const findDifficulty = () => {
+  const newestBlock = getNewestBlock();
+  if (newestBlock.index % DIFFICULTY_ADJUSMENT_INTERVAL === 0 && newestBlock.index !== 0) {
+    //todo calculate new difficulty
+    return calculateNewDifficult(newestBlock, getBlockchain());
+  } else {
+    return newestBlock.difficulty;
+  }
+}
+
+//새로운 난이도를 계산한다.
+const calculateNewDifficult = (newestBlock, blockchain) => {
+  const lastCalculateDifficult = blockchain[blockchain.length - DIFFICULTY_ADJUSMENT_INTERVAL];
+  const timeExpected = BLOCK_GENERATION_INTERVAL * DIFFICULTY_ADJUSMENT_INTERVAL;
+  const timeTaken = newestBlock.timestamp - lastCalculateDifficult.timestamp;
+  if (timeTaken < timeExpected / 2) {
+    //체굴시간이 너무 짧다면 난이도 증가.
+    return lastCalculateDifficult.difficulty + 1;
+  } else if (timeTaken > timeExpected * 2) {
+    //채굴시간이 너무 길다면 난이도 감소
+    return lastCalculateDifficult.difficulty - 1;
+  } else {
+    //채굴시간이 적당하다면 수정하지 않는다.
+    return lastCalculateDifficult.difficulty;
+  }
+}
 
 //블
 const findBlock  = (index, previousHash, timestamp, data, difficulty) => {
@@ -96,7 +135,16 @@ const hashMatchesDifficulty = (hash, difficulty) => {
 }
 
 //블럭 해시를 생성해서 가져온다.
-const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data);
+const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data, block.difficulty, block.nonce);
+
+//타임스탬프 유효성 검증.
+//새로 생성된 블럭의 생성시간이 현재 시간을 기준으로 유효한 범위 안에 들어 있는지를 확인해야한다.
+//블럭이 생성된가 함게 유효성 검증을 하게 됨으로 특정범위 밖으로 나가게된다면 유효성에 문제가 있는것이다.
+const isTimeStampValid = (newBlock, oldBlock) => {
+  return (
+      oldBlock.timestamp - 60 < newBlock.timestamp &&
+      newBlock.timestamp - 60 < getNewTimestamp());
+}
 
 // 새로 생성된 블럭 검증.
 // @param candidateBlock 후보불럭 새로 생선예정 블럭
@@ -117,6 +165,9 @@ const isBlockValid = (candidateBlock, lastestBlock) => {
   } else if (getBlockHash(candidateBlock) !== candidateBlock.hash) {
     // 후보블럭 해쉬 검증.
     console.log('The hash of this block is invalid');
+    return false;
+  } else if (!isTimeStampValid(candidateBlock, lastestBlock)) {
+    console.log('The timestamp of thi block is dodgy');
     return false;
   }
   return true;

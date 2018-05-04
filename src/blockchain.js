@@ -210,11 +210,23 @@ const isChaindValid = (candidateBlock) => {
   }
 }
 
+//함수형 programming
+//함수를 사용하여 축약한다.
+//블럭체인의 난이도를 합산하여 리턴한다.
+const sumDifficulty = anyBlockchain =>
+  anyBlockchain
+  .map(block => block.difficulty) //블럭배열의 난이도를 배열화함.
+  .map(difficulty => Math.pow(2, difficulty)) //각각의 난이도에 2를 곱함.
+  .reduce((a, b) => a + b); //각 배열을 합하여 리턴.
+
+
+
 //블럭및 체인의 검증이 완료되면 새로운 블럭체인으로 교체한다.
 //블럭검증 -> genesis 블럭 검증, 유효성 검증 -> 체인 길이확인. -> 교체
-const replaceChain = newChain =>{
-  if(isChaindValid(newChain) && newChain.length > getBlockchain().length) {
-    blockChain = newChain;
+const replaceChain = candidateChain =>{
+  //if(isChaindValid(newChain) && newChain.length > getBlockchain().length) { // 체인의 배열 길이가 더 길때에만 교환했다.
+  if(isChaindValid(candidateChain) && sumDifficulty(candidateChain) > sumDifficulty(getBlockchain())) { //난이도가 더 높은 체인일때에 교채한다. 
+    blockChain = candidateChain;
     return true;
   } else {
     //체인 길이가 짧거나 같다면 블럭 채굴 실패.

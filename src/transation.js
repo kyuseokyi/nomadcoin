@@ -35,6 +35,7 @@ class Transaction {
 //거래가 발생되면 사용되지 않은 트랜잭션 사용 내역을 가지고 거래를 시작한다.
 //현재 보유중인 코인(블럭체인)및 거래 내역이다. 입출금등 거래가 발생후 최종적으로 업데이트 해야한다.
 //거래의 시작이자 마지막이다.
+//내 블럭체인(코인내역이다.) 내가 소유한. 거래가 발생하여 블럭으 받거나 사용했다면 추가및 삭제해야한다.
 let uTxOuts = [];
 
 class UTxOut {
@@ -95,4 +96,11 @@ const updateUTxOuts = (newTxs, uTxOutList) => {
     .map(tx => tx.txIns)
     .reduce((a, b) => a.concat(b), [])
     .map(txIn => new UTxOut(txIn.txOutId, "",0));
+
+  //todo 이미사용된 UTxOutsList 업데이트 해야하다. 사용된 spentTxOuts를 삭제한다.
+  const resultingUTxOuts = uTxOutList
+    .filter(uTxOut => !findUTxOut(uTxOut.txOutId, uTxOut.txOutIndex, spentTxOuts))
+    .concat(newUTxOuts);
+
+  return resultingUTxOuts;
 }

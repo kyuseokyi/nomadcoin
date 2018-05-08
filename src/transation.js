@@ -104,3 +104,55 @@ const updateUTxOuts = (newTxs, uTxOutList) => {
 
   return resultingUTxOuts;
 }
+
+//transaction input structure valid
+//입금거래 내역 구조 유효성을 검증한다.
+const isTxInStructureValid = (txIn) => {
+  //todo
+  if (txIn === null) {
+    return false;
+  } else if (typeof txIn.signature !== "string") {
+
+    return false;
+  } else if (typeof txIn.txOutId !== "string") {
+
+    return false;
+  } else if (typeof txIn.txOutIndex !== "number") {
+
+    return false;
+  } else {
+    return true;
+  }
+}
+
+//transaction output structure valid
+//출금거래 내역 구조 유효성을 검증한다.
+const isTxOutStructureValid = (txOut) => {
+  //todo
+
+}
+
+
+//transaction valid
+//거래 내역의 유효성을 검증한다.
+const isTxStructureValid = (tx) => {
+   if (typeof tx.id !== "string") {
+     console.log('Tx ID is not valid');
+     return false;
+   } else if (!(tx.txIns instanceof Array)) {
+     console.log('The txIns is not Array');
+     return false;
+   } else if () {
+    console.log("The structure of one of the txIn is not valid");
+    return false;
+   } else if (!(tx.txOuts instanceof Array)) {
+     console.log('The txOuts is not Array');
+     return false;
+   } else if () {
+     console.log("The structure of one of the txIn is not valid");
+     return false;
+   } else {
+     cosoele.log("Tx is valid");
+     return true;
+   }
+}

@@ -125,11 +125,32 @@ const isTxInStructureValid = (txIn) => {
   }
 }
 
+const isAddressValid = (address) => {
+  if (address.length >= 300) {
+    //주소가 300과 같거나 작으면 오류
+    return false;
+  } else if (address.match("^[a-fA-F0-9]+$") === null) {
+    return false;
+  } else if (!address.startsWith("04")) {
+    return false;
+  }
+}
+
 //transaction output structure valid
 //출금거래 내역 구조 유효성을 검증한다.
 const isTxOutStructureValid = (txOut) => {
   //todo
-
+  if (txOut === null) {
+    return false;
+  } else if (typeof txOut.address !== "string") {
+    return false;
+  } else if (!isAddressValid(txOut.address)) {
+    return false;
+  } else if (typeof txOut.amount !== "number") {
+    return false;
+  } else {
+    return true;
+  }
 }
 
 

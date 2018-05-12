@@ -163,17 +163,22 @@ const isTxStructureValid = (tx) => {
    } else if (!(tx.txIns instanceof Array)) {
      console.log('The txIns is not Array');
      return false;
-   } else if () {
-    console.log("The structure of one of the txIn is not valid");
+   } else if (!tx.txIns.map(isTxInStructureValid).reduce((a, b) => a && b, true)) { //map은 txIn을 인자값으로 하는 isTxInStructureValid함수를 txIns array로 호출합니다.
+      // map을 통하영 isTxInStructureValid 함수는 valid결과를 bool array를 전달하고 . reduce를 이용하여 모든 유형성 검증 결과가 true여야 통과한다.
+     console.log("The structure of one of the txIn is not valid");
     return false;
    } else if (!(tx.txOuts instanceof Array)) {
      console.log('The txOuts is not Array');
      return false;
-   } else if () {
+   } else if (!tx.txOuts.map(isTxOutStructureValid).reduce((a, b) => a && b, true)) {
      console.log("The structure of one of the txIn is not valid");
      return false;
    } else {
      cosoele.log("Tx is valid");
      return true;
    }
+}
+
+const validateTx = (tx, uTxOutList) => {
+
 }

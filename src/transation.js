@@ -179,6 +179,37 @@ const isTxStructureValid = (tx) => {
    }
 }
 
-const validateTx = (tx, uTxOutList) => {
+const validateTxIn = (txIn, tx, uTxOutList) => {
+  const wantedTxOut = uTxOutList.find(uTxout => uTxout.txOutId === txIn.txOutId && uTxout.index === uTxIn.txOutIndex);
+  if (wantedTxOut === null) {
+    //사용할 코인이 없다는 의미.
+    return false;
+  } else {
+    const address = wantedTxOut.address;
+    const key = ec.keyFromPublic(address, "hex");
+    return key.verify(address, txIn.signature);
+  }
+}
 
+const validateTx = (tx, uTxOutList) => {
+  if (getTxId(tx) !== tx.id) {
+    return false;
+  }
+
+  // tx가 유요한 tx를 가지고 있다면
+  const hasValidTxIns = tx.txIns.map(txIn => validateTx(txIn, tx, uTxOuts));
+
+  if (!hasValidTxIns) {
+    return false;
+  }
+
+  const amountTxIns = //todo
+
+  const amountTxOuts = //todo
+
+  if (amountTxIns !== amountTxOuts) {
+    return false;
+  } else {
+
+  }
 }

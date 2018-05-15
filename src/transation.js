@@ -5,6 +5,10 @@ const utils = require('./utils');
 
 const ec = new Elliptic.ec('secp256k1');
 
+//채굴시 얻게되는 코인의 갯수.
+//비트코인의 경우 시간에 따라 코인베이스의 갯수가(반으로) 줄어들게 되어있음.
+const COINBASE_AMOUNT = 50;
+
 //내보내는 transaction data class
 //출금 거래내역 data calss
 class TxOut {
@@ -24,7 +28,7 @@ class TxIn {
 
 //거래 내역 data 클랙스
 //모든 거래내역을 가지고 있음(입출금 내역)
-class Transaction {
+class Tx {
   //ID 고유 id
   //txIns[] 입금내역 배열
   //txOuts[] 출금내역 배열
@@ -191,25 +195,52 @@ const validateTxIn = (txIn, tx, uTxOutList) => {
   }
 }
 
+const getAmountTxIn= (txIn, uTxOutList) => findUTxOut(txIn.txOutId, txIn.txOutIndex, uTxOutList).amount;
+
 const validateTx = (tx, uTxOutList) => {
+  if (!isTxInStructureValid(tx)) {
+    return false;
+  }
+
   if (getTxId(tx) !== tx.id) {
     return false;
   }
 
   // tx가 유요한 tx를 가지고 있다면
-  const hasValidTxIns = tx.txIns.map(txIn => validateTx(txIn, tx, uTxOuts));
+  const hasValidTxIns = tx.txIns.map(txIn => validateTx(txIn, tx, uTxOutList ));
 
   if (!hasValidTxIns) {
     return false;
   }
 
-  const amountTxIns = //todo
+  //
+  const amountTxIns = tx.txIns.map(txIn => getAmountTxIn(txIn, uTxOutList)).reduce((a, b) => a + b, 0);
 
-  const amountTxOuts = //todo
+  //내 보유량-> 사용되지 않은 블럭체인 배영레서 갯수배열을 리턴받는다.
+  const amountTxOuts = tx.txOuts.map(txOut => txOut.amount).reduce((a, b) => a + b, 0);
 
   if (amountTxIns !== amountTxOuts) {
     return false;
   } else {
-
+    return true;
   }
+}
+
+//채굴한 트랜잭션(생성 얻은 코인 내역)검증한다.
+const validateCoinbaseTx = (tx, blockIndex) => {
+  if (getTxId(ts) !== tx.id) {
+    return false;
+  } else if (tx.txIns.length !== 1 ) {
+    //채굴 코인베이스 트랜잭션은 한개의 인풋많이 존재한다. 블럭체인에서 오는 트랜잭션이다.
+    return false;
+  } else if (tx.txIns[0].txOutIndex !== blockIndex) {
+    return false;
+  } else if (tx.txOuts.length !== 1) {
+    return false;
+  } else if (tx.txOuts[0].amount !== COINBASE_AMOUNT) {
+    return false;
+  } else {
+    return true;
+  }
+
 }

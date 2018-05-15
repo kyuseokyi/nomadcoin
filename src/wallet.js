@@ -2,6 +2,7 @@ const elliptic = require("elliptic");
 const path = require("path");
 const fs = require("fs");
 const ec = new elliptic.ec('secp256k1');
+const _= require("lodash");
 
 const privateKeyLocation = path.join(__dirname, "privateKey");
 
@@ -24,6 +25,13 @@ const getPublicKeyFromWallet = () => {
   const key = ec.keyFromPrivate(privateKey, "hex");
   return key.getPublic().excode("hex");
 }
+
+//get balance - 잔고 내역을 가져온다. 내가 소유한 코인 내역.
+//사용하지 않은 거래내역 uTxOuts
+const getBalance = (address, uTxOuts) => {
+  return _(uTxOuts).filter(uTxOut => uTxOut.address === address).map(uTxOut => uTxOut.amount).sum();
+}
+
 
 //init wallet
 const initWallet = () => {

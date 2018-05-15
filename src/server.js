@@ -3,9 +3,11 @@ const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const Blockchain = require('./blockchain');
 const P2P = require('./p2p');
+const Wallet = require('./wallet');
 
 const { getBlockchain, createNewBlock } = Blockchain;
 const { startP2PServer, connectToPeers   } = P2P;
+const { initWallet } = Wallet;
 
 //환경변수가 없다면 3000으로 시작.
 const PORT = process.env.HTTP_PORT || 3000;
@@ -35,4 +37,5 @@ const server = app.listen(PORT, () =>
   console.log('coin HTTP server running on %s', PORT)
 );
 
+initWallet();
 startP2PServer(server);

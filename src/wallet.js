@@ -12,6 +12,19 @@ const generatePriavetKey = () => {
   //hex 값으로 리턴한다.
   return privateKey.toString(16);
 }
+
+//get private key
+const getPrivateKeyFromWallet = () => {
+  const buffer = fs.readFileSync(privateKeyLocation, "utf-8");
+  buffer.toString();
+}
+
+const getPublicKeyFromWallet = () => {
+  const privateKey = getPrivateKeyFromWallet();
+  const key = ec.keyFromPrivate(privateKey, "hex");
+  return key.getPublic().excode("hex");
+}
+
 //init wallet
 const initWallet = () => {
   if (fs.existsSync(privateKeyLocation)) {

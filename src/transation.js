@@ -20,15 +20,15 @@ class TxOut {
 
 //입금거래 data class
 class TxIn {
-  //uTxOutId
-  //uTxOutIndex
+  //txOutId
+  //txOutIndex
   //Sigunature
 
 }
 
 //거래 내역 data 클랙스
 //모든 거래내역을 가지고 있음(입출금 내역)
-class Tx {
+class Transaction {
   //ID 고유 id
   //txIns[] 입금내역 배열
   //txOuts[] 출금내역 배열
@@ -68,11 +68,11 @@ const findUTxOut = (txOutId, txOutIndex, uTxOutList) => {
   return uTxOutList.find(uTxOut => uTxout.txOutId === txOutId && uTxout.txOutIndex === txOutIndex);
 }
 
-const signTxIn = (tx, txIndex, privateKey, uTxOut) => {
+const signTxIn = (tx, txIndex, privateKey, uTxOutList) => {
   const txIn = tx.txIndex[txIndex];
   const dataToSign = tx.id;
   //todo Find transaction to input - 트랜잭션을 하기위해 넣어야 인풋값을 찾아야함 현재 값은 이전에 발생한 트랜잭션의 아웃풋이다.
-  const referencedUTxOut = findUTxOut(txIn.txOutId, txIn.txOutIndex, uTxOuts);
+  const referencedUTxOut = findUTxOut(txIn.txOutId, txIn.txOutIndex, uTxOutList);
   if (referencedUTxOut === null) {
     //해당 값이 널이라면 내가 사용할 coin이 없다는 의미.
     //코인을 보내기위해서 내가 보낼코인과 같거나 많은 코인을 보유 하고 있어야한다.
@@ -80,10 +80,21 @@ const signTxIn = (tx, txIndex, privateKey, uTxOut) => {
     return;
   }
 
+  const referencedAddress = referencedUTxOut.address;
   //todo: sign the txIn
+  if (getPublicKey(privateKey) !== referencedAddress) {
+    return false;
+  }
   const key = ec.keyFromPrivate(privateKey, "hex");
   const signature = utils.toHexString(key.sign(dataToSign).toDER());
   return signature;
+}
+
+const getPublicKey = (privateKey) => {
+  return ec
+    .keyFromPrivate(privateKey, "hex")
+    .getPublic()
+    .encode("hex");
 }
 
 //새로운 거래내역을 가지고 업데이트한다.
@@ -243,4 +254,13 @@ const validateCoinbaseTx = (tx, blockIndex) => {
     return true;
   }
 
+}
+
+module.exports = {
+  getPublicKey,
+  getTxId,
+  signTxIn,
+  TxIn,
+  Transaction,
+  TxOut
 }

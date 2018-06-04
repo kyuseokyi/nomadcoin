@@ -34,14 +34,6 @@ class Transaction {
   //txOuts[] 출금내역 배열
 }
 
-//사용안된 transaction data class
-//사용하지 않은 아웃풋 이전 트랜잭션에서.
-//거래가 발생되면 사용되지 않은 트랜잭션 사용 내역을 가지고 거래를 시작한다.
-//현재 보유중인 코인(블럭체인)및 거래 내역이다. 입출금등 거래가 발생후 최종적으로 업데이트 해야한다.
-//거래의 시작이자 마지막이다.
-//내 블럭체인(코인내역이다.) 내가 소유한. 거래가 발생하여 블럭으 받거나 사용했다면 추가및 삭제해야한다.
-let uTxOuts = [];
-
 class UTxOut {
   constructor(txOutId, txOutIndex, address, amount) {
     this.txOutId = txOutId;

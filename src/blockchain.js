@@ -1,9 +1,11 @@
 const CryptoJS = require('crypto-js');
 const hexToBinary = require('hex-to-binary');
 const Wallet = require('./wallet');
+const transaction = require('./transation');
 
 //코인의 잔고를 확인하기 위해서 wallet balance
-const { getBalance, getPrivateKeyFromWallet } = Wallet;
+const { getBalance, getPrivateKeyFromWallet, getPublicKeyFromWallet } = Wallet;
+const { createCoinbaseTx } = transaction;
 
 //몇분마다 블럭이 체굴될것인지.
 const BLOCK_GENERATION_INTERVAL = 10;
@@ -69,7 +71,15 @@ const getBlockchain = () => blockChain;
 const createHash = (index, previoushash, timestamp, data, difficulty, nonce) =>
     CryptoJS.SHA256(index + previoushash + timestamp + JSON.stringify(data) + difficulty + nonce).toString();
 
-const createNewBlock = data => {
+const createNewBlock = () => {
+  console.log("create new blocks started");
+  const coinbaseTx = createCoinbaseTx(getPublicKeyFromWallet(), getNewestBlock().index + 1);
+  console.log("coinbase tx made");
+  const blockData = [coinbaseTx];
+  return createNewRawBlock(blockData);
+};
+
+const createNewRawBlock = data => {
   const previousBlock = getNewestBlock();
   const newBlockIndex = previousBlock.index +1;
   const newTimestamp = getNewTimestamp();
@@ -96,7 +106,7 @@ const findDifficulty = () => {
   } else {
     return newestBlock.difficulty;
   }
-}
+};
 
 //새로운 난이도를 계산한다.
 const calculateNewDifficult = (newestBlock, blockchain) => {
@@ -113,7 +123,7 @@ const calculateNewDifficult = (newestBlock, blockchain) => {
     //채굴시간이 적당하다면 수정하지 않는다.
     return lastCalculateDifficult.difficulty;
   }
-}
+};
 
 //블
 const findBlock  = (index, previousHash, timestamp, data, difficulty) => {
@@ -134,7 +144,7 @@ const findBlock  = (index, previousHash, timestamp, data, difficulty) => {
     }
     nonce++;
   }
-}
+};
 
 //hash의 난이도를 찾아낸다.
 const hashMatchesDifficulty = (hash, difficulty) => {
@@ -142,7 +152,7 @@ const hashMatchesDifficulty = (hash, difficulty) => {
   const requiredZeros = "0".repeat(difficulty);
   console.log('Trying difficulty :', difficulty, 'with hash', hash);
   return hexInBinary.startsWith(requiredZeros);
-}
+};
 
 //블럭 해시를 생성해서 가져온다.
 const getBlockHash = (block) => createHash(block.index, block.previousHash, block.timestamp, block.data, block.difficulty, block.nonce);
@@ -154,7 +164,7 @@ const isTimeStampValid = (newBlock, oldBlock) => {
   return (
       oldBlock.timestamp - 60 < newBlock.timestamp &&
       newBlock.timestamp - 60 < getNewTimestamp());
-}
+};
 
 // 새로 생성된 블럭 검증.
 // @param candidateBlock 후보불럭 새로 생선예정 블럭
@@ -181,7 +191,7 @@ const isBlockValid = (candidateBlock, lastestBlock) => {
     return false;
   }
   return true;
-}
+};
 
 // 새로운 블럭의 구조를 검증한다.
 const isBlockStructureValid = (block) => {
@@ -191,9 +201,9 @@ const isBlockStructureValid = (block) => {
         typeof block.hash === 'string' &&
         typeof block.previousHash === 'string' &&
         typeof block.timestamp === 'number' &&
-        typeof block.data === 'string'
+        typeof block.data === 'object'
     )
-}
+};
 
 //블럭체인을 검증한다.
 //중요 - 모든 블럭은 하나의 genesis 시작된 불럭이어야한다.
@@ -202,7 +212,7 @@ const isChaindValid = (candidateBlock) => {
   //블럭체인(배열)
   const isGenesisValid = (block) => {
     return JSON.stringify(block) === JSON.stringify(genesisBlock)
-  }
+  };
   //후보 체인이 genesisBlock으로 부터 만들어 졌는지를 확인한다.
   if (!isGenesisValid(candidateBlock[0])) {
     console.log("The candidateChain's genesis block is not same as our genesis block");
@@ -218,7 +228,7 @@ const isChaindValid = (candidateBlock) => {
     }
     return true;
   }
-}
+};
 
 //함수형 programming
 //함수를 사용하여 축약한다.
@@ -242,7 +252,7 @@ const replaceChain = candidateChain =>{
     //체인 길이가 짧거나 같다면 블럭 채굴 실패.
     return false;
   }
-}
+};
 
 //블럭 검증 완료되면 기존블럭체인에 새로운 블럭을 추가한다.
 //genesis블럭및 구조검증은 완료된 상태이다.
@@ -255,7 +265,7 @@ const addBlockToChain = candidateBlock => {
     console.log('block add fail');
     return false;
   }
-}
+};
 
 const getAccountBalance = () => getBalance(getPrivateKeyFromWallet(), uTxOuts);
 
@@ -268,4 +278,4 @@ module.exports = {
   addBlockToChain,
   replaceChain,
   getAccountBalance
-}
+};

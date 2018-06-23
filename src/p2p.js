@@ -46,7 +46,7 @@ const startP2PServer = server => {
     initSocketConnection(ws);
   });
   console.log('p2p servers is running!!');
-}
+};
 
 //소켓 초기화 핸들러.
 const initSocketConnection = ws => {
@@ -59,7 +59,7 @@ const initSocketConnection = ws => {
   //이블럭을 통행 접속한 대상의 불럭체인 상태를 점검한다. 동일한 체인인지. 서로 다른 체인의 사이즈를 가지고 있는지확인다.
   sendMessage(ws, responseLatest());
   console.log('finish initsocketconnection');
-}
+};
 
 //소켓 메세지에 들어오는(input) data 파싱.
 const parseData = data => {
@@ -69,7 +69,7 @@ const parseData = data => {
     console.log(e);
     return null;
   }
-}
+};
 
 //소켓 메세지 핸들러 정의
 const handleSocketMessages = ws => {
@@ -126,7 +126,7 @@ const handleBlockchainResponse = receivedBlocks => {
       if (addBlockToChain(latestBlockReceived)) {
         //블럭이 성공적으로 추가되었다면 모든 노드에게 추가된 불럭을 전달한다.
         broadcastNewBlock();
-      };
+      }
     } else if (receivedBlocks.length === 1) {
       //To do , get all blocks,
       //클라이언트가 가진 블러과의 차이 많다면 (배열의 길이의 차이가 심하다면 전체를 교채한다. )
@@ -137,7 +137,7 @@ const handleBlockchainResponse = receivedBlocks => {
     }
     console.log("")
   }
-}
+};
 
 //들어온 요청에 메세지를 보낸다.
 const sendMessage = (ws, message) => ws.send(JSON.stringify(message));
@@ -161,11 +161,11 @@ const handleSocketError = ws => {
   const closeSocketConnection = ws => {
     ws.close();
     sockets.splice(sockets.indexOf(ws),1);
-  }
+  };
 
   ws.on('close', () => closeSocketConnection(ws));
   ws.on('error', () => closeSocketConnection(ws));
-}
+};
 
 //peer(소켓서버)에 접속한다.
 //@param newPeer socket url
@@ -175,10 +175,10 @@ const connectToPeers = newPeer => {
   ws.on("open", () => {
     initSocketConnection(ws);
   });
-}
+};
 
 module.exports = {
   startP2PServer,
   connectToPeers,
   broadcastNewBlock
-}
+};

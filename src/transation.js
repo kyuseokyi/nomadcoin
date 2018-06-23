@@ -1,5 +1,5 @@
 // Tx === Transaction
-const CryptoJs = require('crypto-js');
+const CryptoJS = require('crypto-js');
 const Elliptic = require('elliptic');
 const utils = require('./utils');
 
@@ -22,8 +22,7 @@ class TxOut {
 class TxIn {
   //txOutId
   //txOutIndex
-  //Sigunature
-
+  //signatures
 }
 
 //거래 내역 data 클랙스
@@ -45,20 +44,20 @@ class UTxOut {
 
 //거래내역 id를 가져온다.
 const getTxId = tx => {
-  //transaction 정보를 취합하여 하나의 스트링으로 리턴
-  const txInContent = tx.txIns
-    .map(txIn => (txIn.uTxOutId + txIn.txOutIndex))
-    .reduce((a, b) => a+b, "");
+  const txInContent = tx.txIn
+  .map(txIn => txIn.txOutId + txIn.txOutIndex)
+  .reduce((a, b) => a + b, "");
+  console.log("txInContent");
   const txOutContent = tx.txOuts
-    .map(txOuts => (txOuts.address + txOuts.amount))
-    .reduce((a, b) => a+b, "");
+  .map(txOut => txOut.address + txOut.amount)
+  .reduce((a, b) => a + b, "");
 
-  return CryptoJs.SHA256(txInContent + txOutContent).toString();
-}
+  return CryptoJS.SHA256(txInContent + txOutContent + tx.timestamp).toString();
+};
 
 const findUTxOut = (txOutId, txOutIndex, uTxOutList) => {
   return uTxOutList.find(uTxOut => uTxout.txOutId === txOutId && uTxout.txOutIndex === txOutIndex);
-}
+};
 
 const signTxIn = (tx, txIndex, privateKey, uTxOutList) => {
   const txIn = tx.txIndex[txIndex];
@@ -80,14 +79,14 @@ const signTxIn = (tx, txIndex, privateKey, uTxOutList) => {
   const key = ec.keyFromPrivate(privateKey, "hex");
   const signature = utils.toHexString(key.sign(dataToSign).toDER());
   return signature;
-}
+};
 
 const getPublicKey = (privateKey) => {
   return ec
     .keyFromPrivate(privateKey, "hex")
     .getPublic()
     .encode("hex");
-}
+};
 
 //새로운 거래내역을 가지고 업데이트한다.
 //코인 돈 블럭의 이동 내역이다.
@@ -110,7 +109,7 @@ const updateUTxOuts = (newTxs, uTxOutList) => {
     .concat(newUTxOuts);
 
   return resultingUTxOuts;
-}
+};
 
 //transaction input structure valid
 //입금거래 내역 구조 유효성을 검증한다.
@@ -130,7 +129,7 @@ const isTxInStructureValid = (txIn) => {
   } else {
     return true;
   }
-}
+};
 
 const isAddressValid = (address) => {
   if (address.length >= 300) {
@@ -141,7 +140,7 @@ const isAddressValid = (address) => {
   } else if (!address.startsWith("04")) {
     return false;
   }
-}
+};
 
 //transaction output structure valid
 //출금거래 내역 구조 유효성을 검증한다.
@@ -158,7 +157,7 @@ const isTxOutStructureValid = (txOut) => {
   } else {
     return true;
   }
-}
+};
 
 
 //transaction valid
@@ -184,7 +183,7 @@ const isTxStructureValid = (tx) => {
      cosoele.log("Tx is valid");
      return true;
    }
-}
+};
 
 const validateTxIn = (txIn, tx, uTxOutList) => {
   const wantedTxOut = uTxOutList.find(uTxout => uTxout.txOutId === txIn.txOutId && uTxout.index === uTxIn.txOutIndex);
@@ -196,7 +195,7 @@ const validateTxIn = (txIn, tx, uTxOutList) => {
     const key = ec.keyFromPublic(address, "hex");
     return key.verify(address, txIn.signature);
   }
-}
+};
 
 const getAmountTxIn= (txIn, uTxOutList) => findUTxOut(txIn.txOutId, txIn.txOutIndex, uTxOutList).amount;
 
@@ -227,26 +226,47 @@ const validateTx = (tx, uTxOutList) => {
   } else {
     return true;
   }
-}
+};
 
 //채굴한 트랜잭션(생성 얻은 코인 내역)검증한다.
 const validateCoinbaseTx = (tx, blockIndex) => {
   if (getTxId(ts) !== tx.id) {
+    console.log("Invalid coinbase tx Id");
     return false;
   } else if (tx.txIns.length !== 1 ) {
     //채굴 코인베이스 트랜잭션은 한개의 인풋많이 존재한다. 블럭체인에서 오는 트랜잭션이다.
+    console.log("Coinbase tx should only have one input");
     return false;
   } else if (tx.txIns[0].txOutIndex !== blockIndex) {
+    console.log("The txOutindex of coinbase Tx should be the same as the Block index");
     return false;
   } else if (tx.txOuts.length !== 1) {
+    console.log("Coinbase tx should only have one outPut");
     return false;
   } else if (tx.txOuts[0].amount !== COINBASE_AMOUNT) {
+    console.log('Coinbase TX should have an amount of only ${COINBASE_AMOUNT} and it has ${tx.txOut[0].amount');
     return false;
   } else {
     return true;
   }
 
-}
+};
+
+//Coinbase Tx를 만든다.
+//address ->
+//blockIndex -> 생성된 블럭의 인덱스
+const createCoinbaseTx = (address, blockIndex) => {
+  console.log("address = "+ address +" "+"blockIndex =" + blockIndex);
+  const tx = new Transaction();
+  const txIn = new TxIn();
+  txIn.signature = "";
+  txIn.txOutId = blockIndex;
+  tx.txIn = [txIn];
+  tx.txOuts = [new TxOut(address, COINBASE_AMOUNT)];
+  tx.id = getTxId(tx);
+  return tx;
+
+};
 
 module.exports = {
   getPublicKey,
@@ -254,5 +274,6 @@ module.exports = {
   signTxIn,
   TxIn,
   Transaction,
-  TxOut
-}
+  TxOut,
+  createCoinbaseTx
+};

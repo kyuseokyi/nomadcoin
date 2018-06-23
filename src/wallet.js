@@ -15,25 +15,25 @@ const generatePriavetKey = () => {
   const privateKey = keyPair.getPrivate();
   //hex 값으로 리턴한다.
   return privateKey.toString(16);
-}
+};
 
 //get private key
 const getPrivateKeyFromWallet = () => {
   const buffer = fs.readFileSync(privateKeyLocation, "utf8");
   return buffer.toString();
-}
+};
 
 const getPublicKeyFromWallet = () => {
   const privateKey = getPrivateKeyFromWallet();
   const key = ec.keyFromPrivate(privateKey, "hex");
-  return key.getPublic().excode("hex");
-}
+  return key.getPublic().encode("hex");
+};
 
 //get balance - 잔고 내역을 가져온다. 내가 소유한 코인 내역.
 //사용하지 않은 거래내역 uTxOuts
 const getBalance = (address, uTxOuts) => {
   return _(uTxOuts).filter(uTxOut => uTxOut.address === address).map(uTxOut => uTxOut.amount).sum();
-}
+};
 
 
 //init wallet
@@ -45,7 +45,7 @@ const initWallet = () => {
   const newPrivateKey = generatePriavetKey();
   //privatekey를 생성한후 저장한다.
   fs.writeFileSync(privateKeyLocation, newPrivateKey);
-}
+};
 
 //실제 소유한 coin 돈을 가져온다.
 const findAmountInUTxOuts = (amountNeeded, uTxOuts, txOut) => {
@@ -62,7 +62,7 @@ const findAmountInUTxOuts = (amountNeeded, uTxOuts, txOut) => {
   //자금 부족.
   console.log("Not enough founds")
   return false;
-}
+};
 // 거래 송급
 // receiverAddress -> 받을 주소.
 // myAddress -> 보내고 남은 것을 받을 주소.
@@ -75,7 +75,7 @@ const createTxOuts = (receiverAddress, myAddress, amount, leftOverAmount) => {
     return [receiverAddress, leftOverAmount];
   }
 
-}
+};
 
 //transaction 을 생성한다.
 //amount 얼마를 보낼것인가.
@@ -91,7 +91,7 @@ const createTx = (receiverAddress, amount, privateKey, uTxOutList) => {
     const txIn = new TxIn();
     txIn.txOutId = uTxOut.txOutId;
     txIn.txOutIndex = uTxOut.txOutIndex;
-  }
+  };
 
   const unsignedTxIns = includedUTxOuts.map(toUnSignedUTxIn);
 
@@ -107,10 +107,11 @@ const createTx = (receiverAddress, amount, privateKey, uTxOutList) => {
   });
 
   return tx;
-}
+};
 
 module.exports = {
   initWallet,
   getBalance,
-  getPrivateKeyFromWallet
-}
+  getPrivateKeyFromWallet,
+  getPublicKeyFromWallet
+};
